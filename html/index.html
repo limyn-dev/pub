@@ -4,5 +4,20 @@
     <UL>
       <LI><A href="quiz_electricien.html">Quiz Electro</A></LI>
     </UL>
+    <BUTTON id="arret">Arrêter le serveur</BUTTON>
+    <P id="etat"></P>
+    <SCRIPT>
+      document.getElementById("arret").addEventListener("click", async function () {
+        if (!confirm("Arrêter le serveur ?")) return;
+        try {
+          const reponse = await fetch("/shutdown", { method: "POST" });
+          document.getElementById("etat").textContent = reponse.ok
+            ? "Serveur arrêté. Vous pouvez fermer cette page."
+            : "Arrêt refusé (accessible uniquement depuis le PC serveur).";
+        } catch (erreur) {
+          document.getElementById("etat").textContent = "Le serveur ne répond plus.";
+        }
+      });
+    </SCRIPT>
   </BODY>
 </HTML>
