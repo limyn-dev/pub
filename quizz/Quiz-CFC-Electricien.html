@@ -1,0 +1,189 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>body{margin:0}[hidden]{display:none!important}</style>
+<title>Quiz CFC Électricien</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600&family=Barlow+Condensed:wght@600;700&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: une colonne étroite façon fiche de chantier; bande de couleurs des conducteurs en en-tête */
+:root{
+  --bg:#f3f4f2; --surface:#ffffff; --fg:#1d2321; --muted:#5d6763; --line:#d9ddda;
+  --accent:#1f5fbf; --accent-soft:#e3ecfa;
+  --ok:#2e7d3a; --ok-soft:#e4f2e6; --ko:#b3361f; --ko-soft:#f8e5e0;
+  --brown:#7a4a26; --black:#1d2321; --grey:#8c9490; --blue:#1f5fbf; --yellow:#e2c21b; --green:#2e8b3a;
+  --f-display:"Barlow Condensed","Arial Narrow",Arial,sans-serif;
+  --f-body:"Barlow",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --f-mono:"JetBrains Mono",ui-monospace,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#141817; --surface:#1d2321; --fg:#e8ebe9; --muted:#9aa49f; --line:#323a37;
+  --accent:#6ea0ee; --accent-soft:#1c2a40; --ok:#6cc47a; --ok-soft:#1b2e1f; --ko:#ee7e66; --ko-soft:#3a201a;
+  --black:#0a0c0b; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#141817; --surface:#1d2321; --fg:#e8ebe9; --muted:#9aa49f; --line:#323a37;
+  --accent:#6ea0ee; --accent-soft:#1c2a40; --ok:#6cc47a; --ok-soft:#1b2e1f; --ko:#ee7e66; --ko-soft:#3a201a;
+  --black:#0a0c0b; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--fg);font-family:var(--f-body);font-size:16px;line-height:1.5}
+.wrap{max-width:720px;margin:0 auto;padding-block:24px 48px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:flex;flex-direction:column;gap:20px}
+.wires{display:flex;height:6px;border-radius:3px;overflow:hidden}
+.wires span{flex:1}
+.pe{background:repeating-linear-gradient(90deg,var(--yellow) 0 10px,var(--green) 10px 20px)}
+header h1{font-family:var(--f-display);font-weight:700;font-size:2.1rem;line-height:1.05;margin:12px 0 4px;text-wrap:balance;letter-spacing:.01em}
+header p{margin:0;color:var(--muted)}
+.filters{display:flex;flex-wrap:wrap;gap:8px}
+.chip{font:600 .85rem var(--f-body);border:1px solid var(--line);background:var(--surface);color:var(--fg);padding:6px 12px;border-radius:999px;cursor:pointer}
+.chip[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--surface)}
+.chip:focus-visible,.opt:focus-visible,.btn:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:20px;display:flex;flex-direction:column;gap:16px}
+.meta{display:flex;justify-content:space-between;align-items:center;gap:12px;font-size:.8rem;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);font-variant-numeric:tabular-nums}
+.tag{color:var(--accent);font-weight:600}
+.bar{height:4px;background:var(--line);border-radius:2px;overflow:hidden}
+.bar i{display:block;height:100%;background:var(--accent);transition:width .25s}
+.q{font-size:1.15rem;font-weight:600;margin:0;line-height:1.4}
+.data{font-family:var(--f-mono);font-size:.88rem;background:var(--accent-soft);border-radius:6px;padding:10px 12px;overflow-x:auto;white-space:pre-wrap}
+.opts{display:flex;flex-direction:column;gap:8px}
+.opt{display:flex;gap:12px;align-items:flex-start;text-align:left;font:inherit;color:var(--fg);background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:12px 14px;cursor:pointer}
+.opt:hover:not(:disabled){border-color:var(--accent)}
+.opt b{font-family:var(--f-mono);font-size:.85rem;color:var(--muted);min-width:1.2em}
+.opt.ok{background:var(--ok-soft);border-color:var(--ok)}
+.opt.ko{background:var(--ko-soft);border-color:var(--ko)}
+.opt:disabled{cursor:default}
+.feedback{border-left:4px solid var(--ok);padding:4px 0 4px 14px;display:flex;flex-direction:column;gap:6px}
+.feedback.bad{border-color:var(--ko)}
+.feedback strong{font-family:var(--f-display);font-size:1.15rem;letter-spacing:.02em}
+.feedback p{margin:0;color:var(--muted)}
+.feedback code{font-family:var(--f-mono);font-size:.85rem;color:var(--fg)}
+.actions{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
+.btn{font:600 1rem var(--f-body);border:none;background:var(--accent);color:var(--surface);padding:10px 20px;border-radius:8px;cursor:pointer}
+.btn.ghost{background:transparent;color:var(--accent);border:1px solid var(--line)}
+.score{font-variant-numeric:tabular-nums;color:var(--muted);font-size:.9rem}
+.result h2{font-family:var(--f-display);font-size:3rem;margin:0;line-height:1;font-variant-numeric:tabular-nums}
+.result .verdict{margin:0;font-weight:600}
+.cats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
+.cats div{border:1px solid var(--line);border-radius:8px;padding:10px 12px;font-size:.9rem;font-variant-numeric:tabular-nums}
+.cats span{display:block;color:var(--muted);font-size:.78rem;text-transform:uppercase;letter-spacing:.06em}
+.review{display:flex;flex-direction:column;gap:12px}
+.review article{border-top:1px solid var(--line);padding-top:12px;display:flex;flex-direction:column;gap:4px}
+.review article p{margin:0}
+.review .ans{color:var(--ok);font-weight:600}
+.review .exp{color:var(--muted);font-size:.92rem}
+footer{color:var(--muted);font-size:.82rem}
+@media (prefers-reduced-motion:reduce){.bar i{transition:none}}
+</style>
+
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="wires" aria-hidden="true"><span style="background:var(--brown)"></span><span style="background:var(--black)"></span><span style="background:var(--grey)"></span><span style="background:var(--blue)"></span><span class="pe"></span></div>
+    <h1>Quiz CFC Électricien</h1>
+    <p>Révision type procédure de qualification : calculs, NIBT, schémas et sécurité.</p>
+  </header>
+
+  <div class="filters" id="filters" role="group" aria-label="Choisir les thèmes"></div>
+
+  <main id="app" class="card" aria-live="polite"></main>
+
+  <footer>Les valeurs suivent la NIBT et les usages courants en Suisse. Vérifie toujours dans ta NIBT et avec ton école, car les normes évoluent.</footer>
+</div>
+
+<script>
+const Q = [
+ {c:"Calculs",q:"Un moteur triphasé est alimenté en 400 V. Il absorbe 10 A avec un cos φ de 0,85. Quelle est sa puissance active ?",d:"P = √3 · U · I · cos φ",o:["3,40 kW","4,00 kW","5,89 kW","6,93 kW"],a:2,e:"P = 1,732 × 400 × 10 × 0,85 ≈ 5 889 W, donc environ 5,89 kW. 6,93 kW serait la puissance apparente S (sans le cos φ)."},
+ {c:"Calculs",q:"Un radiateur de 2 300 W est branché en 230 V. Quelle est sa résistance ?",d:"R = U² / P",o:["10 Ω","23 Ω","100 Ω","230 Ω"],a:1,e:"R = 230² / 2300 = 52 900 / 2300 = 23 Ω. Le courant vaut I = P / U = 10 A."},
+ {c:"Calculs",q:"Quelle est la résistance d'un conducteur en cuivre de 20 m et de 1,5 mm² ?",d:"ρ cuivre = 0,0175 Ω·mm²/m\nR = ρ · l / A",o:["0,023 Ω","0,233 Ω","0,525 Ω","2,33 Ω"],a:1,e:"R = 0,0175 × 20 / 1,5 ≈ 0,233 Ω. Pour un circuit aller-retour, il faudrait compter 2 × 20 m."},
+ {c:"Calculs",q:"Un circuit monophasé 230 V de 25 m (longueur simple) en 1,5 mm² Cu transporte 10 A, cos φ = 1. Quelle est la chute de tension en % ?",d:"ΔU = 2 · l · I · ρ / A",o:["1,2 %","2,5 %","4,3 %","5,8 %"],a:1,e:"ΔU = 2 × 25 × 10 × 0,0175 / 1,5 ≈ 5,83 V. En pourcentage : 5,83 / 230 ≈ 2,5 %."},
+ {c:"Calculs",q:"Dans un réseau 3 × 400 V, quelle tension mesure-t-on aux bornes d'un récepteur couplé en étoile ?",d:"U phase = U ligne / √3",o:["133 V","230 V","400 V","690 V"],a:1,e:"400 / 1,732 ≈ 230 V. En triangle, chaque récepteur recevrait les 400 V."},
+ {c:"Calculs",q:"En couplage triangle, quelle relation lie le courant de ligne et le courant dans un enroulement ?",o:["I ligne = I phase","I ligne = I phase / √3","I ligne = √3 · I phase","I ligne = 3 · I phase"],a:2,e:"En triangle, I ligne = √3 × I phase et U ligne = U phase. En étoile, c'est l'inverse : I ligne = I phase et U ligne = √3 × U phase."},
+ {c:"Calculs",q:"Un appareil de 2 kW fonctionne 3 heures. Le kWh coûte 0,30 CHF. Combien coûte l'utilisation ?",d:"W = P · t",o:["0,60 CHF","0,90 CHF","1,80 CHF","6,00 CHF"],a:2,e:"W = 2 kW × 3 h = 6 kWh, puis 6 × 0,30 = 1,80 CHF."},
+ {c:"Calculs",q:"Un transformateur idéal 230 V / 12 V absorbe 0,5 A au primaire. Quel courant fournit-il au secondaire ?",d:"U1 · I1 = U2 · I2",o:["0,026 A","2,4 A","9,6 A","12 A"],a:2,e:"I2 = U1 · I1 / U2 = 230 × 0,5 / 12 ≈ 9,6 A. Le côté basse tension porte le courant le plus élevé."},
+ {c:"Protection & NIBT",q:"Quelle condition doit respecter le choix d'un disjoncteur de protection de ligne ?",d:"Ib : courant d'emploi\nIn : courant nominal du disjoncteur\nIz : courant admissible du câble",o:["In ≤ Ib ≤ Iz","Ib ≤ In ≤ Iz","Iz ≤ In ≤ Ib","Ib ≤ Iz ≤ In"],a:1,e:"Le disjoncteur doit laisser passer le courant d'emploi (Ib ≤ In) tout en protégeant le câble (In ≤ Iz). Iz dépend de la section, du mode de pose et des facteurs de correction."},
+ {c:"Protection & NIBT",q:"En schéma TN 230 V, quel est le temps de coupure maximal pour un circuit terminal jusqu'à 32 A ?",o:["0,1 s","0,4 s","1 s","5 s"],a:1,e:"0,4 s pour les circuits terminaux jusqu'à 32 A. Les circuits de distribution peuvent aller jusqu'à 5 s."},
+ {c:"Protection & NIBT",q:"Quel courant de déclenchement assigné doit avoir un DDR pour la protection complémentaire des prises ?",o:["10 mA","30 mA","100 mA","300 mA"],a:1,e:"30 mA au maximum. Les 300 mA servent surtout à la protection contre l'incendie."},
+ {c:"Protection & NIBT",q:"Que signifie le schéma TN-C-S ?",o:["Le neutre est relié à la terre chez l'abonné uniquement","Un conducteur PEN est séparé en PE et N à un point de l'installation","Il n'y a aucun conducteur de protection","Le réseau est isolé de la terre"],a:1,e:"La partie TN-C utilise un PEN commun. À partir du point de séparation, PE et N sont distincts (TN-S) et ne doivent plus être reliés en aval."},
+ {c:"Protection & NIBT",q:"Dans une salle de bain, qu'est-ce que la zone 0 ?",o:["Le volume jusqu'à 60 cm autour de la baignoire","L'intérieur de la baignoire ou du bac de douche","Le reste de la pièce","Le plafond au-dessus de la baignoire"],a:1,e:"La zone 0 est l'intérieur de la baignoire ou du bac. La zone 1 se trouve au-dessus, la zone 2 s'étend sur 60 cm autour de la zone 1."},
+ {c:"Protection & NIBT",q:"Un appareil porte le symbole d'un double carré. Quelle classe de protection est-ce ?",o:["Classe 0","Classe I","Classe II","Classe III"],a:2,e:"Classe II : double isolation ou isolation renforcée. L'appareil ne se raccorde pas au PE."},
+ {c:"Protection & NIBT",q:"Que signifie le deuxième chiffre du code IP44 ?",o:["Protégé contre les corps solides de plus de 1 mm","Protégé contre les projections d'eau de toutes directions","Protégé contre l'immersion temporaire","Protégé contre les chocs mécaniques"],a:1,e:"Le premier chiffre concerne les corps solides (4 = plus de 1 mm). Le second concerne l'eau (4 = projections de toutes directions)."},
+ {c:"Protection & NIBT",q:"Lors du contrôle final, quelle mesure fait-on en premier ?",o:["Le test du DDR","La boucle de défaut","La continuité du conducteur de protection","Le sens du champ tournant"],a:2,e:"On commence hors tension par la continuité du PE et des liaisons équipotentielles, puis l'isolement. Les mesures sous tension (boucle, DDR, champ tournant) viennent ensuite."},
+ {c:"Schémas & moteurs",q:"Quel schéma permet de commander une lampe depuis deux endroits ?",o:["Schéma 0","Schéma 1","Schéma 3 (va-et-vient)","Schéma 6 (croisement)"],a:2,e:"Le schéma 3 utilise deux commutateurs va-et-vient reliés par deux conducteurs (navettes)."},
+ {c:"Schémas & moteurs",q:"On veut commander une lampe depuis quatre endroits avec des interrupteurs. Combien de schémas 6 (croisement) faut-il ?",o:["1","2","3","4"],a:1,e:"Deux schémas 3 aux extrémités, plus un schéma 6 pour chaque endroit supplémentaire : 4 − 2 = 2. Pour beaucoup d'endroits, on préfère un télérupteur."},
+ {c:"Schémas & moteurs",q:"Dans une commande de contacteur, comment réalise-t-on l'auto-maintien ?",o:["Un contact NF du contacteur en série avec le bouton Arrêt","Un contact NO du contacteur en parallèle avec le bouton Marche","Un contact NO du contacteur en série avec la bobine","Un relais thermique en parallèle avec la bobine"],a:1,e:"Le contact NO auxiliaire (13-14) en parallèle avec le bouton Marche garde la bobine alimentée après le relâchement. Le bouton Arrêt (NF) est en série."},
+ {c:"Schémas & moteurs",q:"Comment inverse-t-on le sens de rotation d'un moteur asynchrone triphasé ?",o:["En inversant le neutre et le PE","En permutant deux phases","En permutant les trois phases","En passant d'étoile en triangle"],a:1,e:"Permuter deux phases inverse le champ tournant. Avec deux contacteurs, il faut un verrouillage électrique (et souvent mécanique) pour éviter un court-circuit."},
+ {c:"Schémas & moteurs",q:"Quel est l'effet du démarrage étoile-triangle sur le courant de démarrage ?",o:["Il est divisé par √3","Il est divisé par 3","Il est doublé","Il ne change pas"],a:1,e:"En étoile, le courant de ligne et le couple valent environ 1/3 de ceux en triangle. Le moteur doit être prévu pour 400 V en triangle."},
+ {c:"Schémas & moteurs",q:"Comment améliore-t-on un mauvais cos φ dû à des charges inductives ?",o:["Avec des bobines en série","Avec des condensateurs","Avec un DDR","En augmentant la section des câbles"],a:1,e:"Les condensateurs fournissent la puissance réactive capacitive qui compense la puissance réactive inductive des moteurs ou des ballasts."},
+ {c:"Sécurité & matériel",q:"Quelle est la première des 5 règles de sécurité avant de travailler sur une installation ?",o:["Vérifier l'absence de tension","Déclencher et séparer","Mettre à terre et en court-circuit","Protéger contre les parties voisines sous tension"],a:1,e:"Ordre : 1. déclencher et séparer, 2. assurer contre le réenclenchement, 3. vérifier l'absence de tension, 4. mettre à terre et en court-circuit, 5. protéger contre les parties voisines sous tension."},
+ {c:"Sécurité & matériel",q:"Quelle couleur est réservée au conducteur neutre ?",o:["Brun","Noir","Gris","Bleu"],a:3,e:"Bleu pour le neutre, jaune-vert pour le PE. Brun, noir et gris servent aux phases (L1, L2, L3)."},
+ {c:"Sécurité & matériel",q:"Une personne reste collée à un conducteur sous tension. Que fais-tu en premier ?",o:["Je la tire par le bras","Je coupe le courant ou je l'écarte avec un objet isolant","Je commence la réanimation","J'appelle d'abord son responsable"],a:1,e:"Se protéger d'abord : couper l'alimentation ou dégager la victime avec un objet isolant. Puis alerter le 144 et donner les premiers secours."}
+];
+const CATS=["Calculs","Protection & NIBT","Schémas & moteurs","Sécurité & matériel"];
+let active=new Set(CATS), deck=[], i=0, answers=[];
+const app=document.getElementById("app"), filters=document.getElementById("filters");
+const esc=s=>s.replace(/[&<>]/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;"}[m]));
+const shuffle=a=>{a=a.slice();for(let k=a.length-1;k>0;k--){const j=Math.floor(Math.random()*(k+1));[a[k],a[j]]=[a[j],a[k]]}return a};
+
+function renderFilters(){
+  filters.innerHTML=CATS.map(c=>`<button class="chip" id="f-${CATS.indexOf(c)}" aria-pressed="${active.has(c)}" data-c="${c}">${c} · ${Q.filter(q=>q.c===c).length}</button>`).join("");
+}
+filters.addEventListener("click",e=>{
+  const b=e.target.closest(".chip"); if(!b) return;
+  const c=b.dataset.c;
+  if(active.has(c)){ if(active.size>1) active.delete(c); } else active.add(c);
+  renderFilters(); start();
+});
+
+function start(){
+  deck=shuffle(Q.filter(q=>active.has(q.c))).map(q=>{
+    const idx=shuffle(q.o.map((_,k)=>k));
+    return {...q,o:idx.map(k=>q.o[k]),a:idx.indexOf(q.a)};
+  });
+  i=0; answers=[]; show();
+}
+const correct=()=>answers.filter(x=>x.ok).length;
+
+function show(){
+  const q=deck[i], done=answers[i];
+  app.innerHTML=`
+   <div class="meta"><span class="tag">${q.c}</span><span>Question ${i+1} / ${deck.length}</span></div>
+   <div class="bar"><i style="width:${(i/deck.length)*100}%"></i></div>
+   <p class="q">${esc(q.q)}</p>
+   ${q.d?`<div class="data">${esc(q.d)}</div>`:""}
+   <div class="opts">${q.o.map((o,k)=>`<button class="opt" id="opt-${k}" data-k="${k}"><b>${"ABCD"[k]}</b><span>${esc(o)}</span></button>`).join("")}</div>
+   <div id="fb"></div>
+   <div class="actions"><span class="score">Score : ${correct()} / ${answers.length}</span><button class="btn" id="next" hidden>${i+1<deck.length?"Question suivante":"Voir le résultat"}</button></div>`;
+  app.querySelectorAll(".opt").forEach(b=>b.addEventListener("click",()=>choose(+b.dataset.k)));
+  document.getElementById("next").addEventListener("click",()=>{ i++; i<deck.length?show():result(); });
+  if(done) reveal(done.pick);
+}
+function choose(k){ if(answers[i]) return; answers[i]={pick:k,ok:k===deck[i].a}; reveal(k); }
+function reveal(k){
+  const q=deck[i], ok=k===q.a;
+  app.querySelectorAll(".opt").forEach((b,n)=>{b.disabled=true; if(n===q.a)b.classList.add("ok"); else if(n===k)b.classList.add("ko");});
+  document.getElementById("fb").innerHTML=`<div class="feedback ${ok?"":"bad"}"><strong>${ok?"Correct":"Pas tout à fait"}</strong><p>${esc(q.e)}</p></div>`;
+  app.querySelector(".score").textContent=`Score : ${correct()} / ${answers.length}`;
+  const n=document.getElementById("next"); n.hidden=false; n.focus();
+}
+function result(){
+  const s=correct(), t=deck.length, pct=Math.round(s/t*100);
+  const verdict=pct>=85?"Excellent, tu es prêt pour ces thèmes.":pct>=60?"Bonne base. Revois les questions manquées ci-dessous.":"Reprends les formules et la NIBT, puis refais le quiz.";
+  const per=[...active].map(c=>{const idx=deck.map((q,n)=>q.c===c?n:-1).filter(n=>n>=0);return `<div><span>${c}</span>${idx.filter(n=>answers[n].ok).length} / ${idx.length}</div>`}).join("");
+  const wrong=deck.map((q,n)=>({q,n})).filter(x=>!answers[x.n].ok);
+  app.innerHTML=`
+   <div class="result"><div class="meta"><span class="tag">Résultat</span><span>${pct} %</span></div>
+   <h2>${s} / ${t}</h2><p class="verdict">${verdict}</p></div>
+   <div class="cats">${per}</div>
+   ${wrong.length?`<div class="review"><div class="meta"><span>Questions à revoir</span></div>${wrong.map(({q})=>`<article><p>${esc(q.q)}</p><p class="ans">${esc(q.o[q.a])}</p><p class="exp">${esc(q.e)}</p></article>`).join("")}</div>`:""}
+   <div class="actions"><button class="btn" id="again">Recommencer</button>${wrong.length?`<button class="btn ghost" id="retry">Refaire les erreurs</button>`:""}</div>`;
+  document.getElementById("again").addEventListener("click",start);
+  const r=document.getElementById("retry");
+  if(r) r.addEventListener("click",()=>{ deck=shuffle(wrong.map(x=>x.q)); i=0; answers=[]; show(); });
+}
+renderFilters(); start();
+</script>
+</body>
+
+</html>
